@@ -1,0 +1,41 @@
+<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.10/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.10/ http://www.mediawiki.org/xml/export-0.10.xsd" version="0.10" xml:lang="en">
+  <page>
+    <title>Apple</title>
+    <revision>
+      <text xml:space="preserve">
+'''Apple Inc.''' is an American [[multinational corporation|multinational]] [[Technology company|technology company]] headquartered in [[Cupertino, California]], that designs, develops, and sells [[consumer electronics]], [[computer software]], and [[online services]]. 
+
+== History ==
+Apple was founded by [[Steve Jobs]], [[Steve Wozniak]], and [[Ronald Wayne]] in April 1976 to develop and sell Wozniak's [[Apple I]] personal computer.
+
+== Products ==
+* [[iPhone]]
+* [[iPad]]
+* [[Mac]]
+      </text>
+    </revision>
+  </page>
+  <page>
+    <title>Banana</title>
+    <revision>
+      <text xml:space="preserve">
+A '''banana''' is an elongated, edible [[fruit]] – botanically a [[berry]] – produced by several kinds of large [[herbaceous plant|herbaceous]] [[flowering plant]]s in the [[genus]] ''[[Musa (genus)|Musa]]''. 
+
+In some countries, bananas used for cooking may be called "[[plantains]]", distinguishing them from '''dessert bananas'''.
+      </text>
+    </revision>
+  </page>
+  <page>
+    <title>Cardputer</title>
+    <revision>
+      <text xml:space="preserve">
+The '''M5Stack Cardputer''' is a card-sized portable computer based on the [[ESP32]]-S3 microcontroller. It features a keyboard, small display, and various sensors.
+
+It is often used for:
+* Protocol hacking
+* Home automation control
+* Learning embedded systems
+      </text>
+    </revision>
+  </page>
+</mediawiki>
