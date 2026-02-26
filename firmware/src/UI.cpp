@@ -1,4 +1,5 @@
 #include "UI.h"
+#include "Arial.h"
 
 // ASCII Art for Splash (Simpler, cleaner font)
 const char* ascii_art[] = {
@@ -28,7 +29,7 @@ UI::UI() {
 
 void UI::begin() {
     M5Cardputer.Display.setTextSize(1);
-    M5Cardputer.Display.setTextColor(WHITE);
+    M5Cardputer.Display.setTextColor(WHITE); 
     // Init buffer (Heap)
     if (!_articleBuffer) {
         _articleBuffer = (char*)malloc(VIEW_BUF_SIZE);
@@ -49,7 +50,8 @@ void UI::begin() {
 void UI::setState(AppState newState) {
     _currentState = newState;
     M5Cardputer.Display.fillScreen(BLACK); // Clear on state change
-    
+    M5Cardputer.Display.setFont(&Arial6pt16b);
+
     if (newState == STATE_SEARCH) {
         // Keep query? 
     } else if (newState == STATE_RESULTS) {
@@ -165,7 +167,8 @@ void UI::drawStatusBar() {
 void UI::drawSplash() {
     M5Cardputer.Display.fillScreen(BLACK);
     M5Cardputer.Display.setTextSize(1); 
-    
+    M5Cardputer.Display.setFont(NULL);
+
     int y = 30;
     for (int i=0; i<5; i++) {
         M5Cardputer.Display.setCursor(40, y + (i*10));
@@ -178,7 +181,7 @@ void UI::drawSplash() {
         }
         
         if (_animFrame > i*5) {
-             M5Cardputer.Display.println(logo_art[i]); 
+            M5Cardputer.Display.println(logo_art[i]); 
         }
     }
     
@@ -193,10 +196,12 @@ void UI::drawSplash() {
         M5Cardputer.Display.setTextColor(LIGHTGREY);
         M5Cardputer.Display.print("AR://WEAVEFRONT");
         
-        M5Cardputer.Display.setCursor(205, 120);
+        M5Cardputer.Display.setCursor(185, 120);
         M5Cardputer.Display.setTextColor(YELLOW);
-        M5Cardputer.Display.print("v1.1");
+        M5Cardputer.Display.print("v1.2(CYR)");
     }
+
+    M5Cardputer.Display.setFont(&Arial6pt16b);
 }
 
 void UI::drawMainMenu() {
@@ -209,7 +214,7 @@ void UI::drawSearch(bool fullRedraw) {
          M5Cardputer.Display.fillScreen(BLACK);
          M5Cardputer.Display.fillRect(0, 0, 240, 30, BLUE);
          M5Cardputer.Display.setTextColor(WHITE);
-         M5Cardputer.Display.setTextSize(2);
+         M5Cardputer.Display.setTextSize(1);
          M5Cardputer.Display.setCursor(10, 6);
          M5Cardputer.Display.print("Search Wiki");
          M5Cardputer.Display.drawRect(10, 50, 220, 40, WHITE);
@@ -218,7 +223,7 @@ void UI::drawSearch(bool fullRedraw) {
     
     M5Cardputer.Display.fillRect(11, 51, 218, 38, BLACK);
     M5Cardputer.Display.setCursor(20, 60);
-    M5Cardputer.Display.setTextSize(2); 
+    M5Cardputer.Display.setTextSize(1); 
     M5Cardputer.Display.setTextColor(GREEN); 
     M5Cardputer.Display.print(_searchQuery);
     if (millis() % 1000 < 500) M5Cardputer.Display.print("_"); 
@@ -227,7 +232,7 @@ void UI::drawSearch(bool fullRedraw) {
         if (_uiMutex) xSemaphoreTake(_uiMutex, portMAX_DELAY);
         
         if (_searchQuery.length() > 0 && _searchResults.size() > 0) {
-            int listY = 100;
+            int listY = 90;
             M5Cardputer.Display.setTextSize(1);
             M5Cardputer.Display.setCursor(10, listY - 10);
             M5Cardputer.Display.setTextColor(YELLOW);
@@ -254,7 +259,7 @@ void UI::drawResults() {
     
     M5Cardputer.Display.fillRect(0, 0, 240, 25, ORANGE);
     M5Cardputer.Display.setTextColor(BLACK);
-    M5Cardputer.Display.setTextSize(2);
+    M5Cardputer.Display.setTextSize(1);
     M5Cardputer.Display.setCursor(5, 4);
     M5Cardputer.Display.print("Results");
     
@@ -294,7 +299,7 @@ void UI::drawReader() {
 
     M5Cardputer.Display.fillRect(0, 0, 240, 25, DARKGREY); 
     M5Cardputer.Display.setCursor(5, 5);
-    M5Cardputer.Display.setTextSize(2); 
+    M5Cardputer.Display.setTextSize(1); 
     M5Cardputer.Display.setTextColor(WHITE);
     M5Cardputer.Display.print(_articleTitle.substring(0, 18));
     
@@ -327,7 +332,7 @@ void UI::drawReader() {
 void UI::drawAbout() {
     M5Cardputer.Display.fillScreen(BLACK);
     M5Cardputer.Display.setCursor(10, 10);
-    M5Cardputer.Display.setTextSize(2);
+    M5Cardputer.Display.setTextSize(1);
     M5Cardputer.Display.setTextColor(CYAN);
     M5Cardputer.Display.println("WikiPuter");
     M5Cardputer.Display.setTextSize(1);

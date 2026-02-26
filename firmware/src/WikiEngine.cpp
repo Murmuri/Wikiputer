@@ -2,6 +2,94 @@
 #include <M5Cardputer.h> // Debug
 #include <lgfx/utility/lgfx_miniz.h>
 
+char32_t WikiEngine::decodeUTF8Char(const char*& ptr, const char* end) const {
+    if (ptr >= end) return 0;
+    
+    unsigned char first = static_cast<unsigned char>(*ptr);
+    
+    if (first < 0x80) {
+        return static_cast<char32_t>(*ptr++);
+    }
+    else if ((first & 0xE0) == 0xC0) {
+        if (ptr + 1 >= end) {
+            ptr++;
+            return 0xFFFD;
+        }
+        char32_t cp = ((first & 0x1F) << 6) |
+                      (static_cast<unsigned char>(ptr[1]) & 0x3F);
+        ptr += 2;
+        return cp;
+    }
+    else if ((first & 0xF0) == 0xE0) {
+        if (ptr + 2 >= end) {
+            ptr++;
+            return 0xFFFD;
+        }
+        char32_t cp = ((first & 0x0F) << 12) |
+                      ((static_cast<unsigned char>(ptr[1]) & 0x3F) << 6) |
+                      (static_cast<unsigned char>(ptr[2]) & 0x3F);
+        ptr += 3;
+        return cp;
+    }
+    else if ((first & 0xF8) == 0xF0) {
+        if (ptr + 3 >= end) {
+            ptr++;
+            return 0xFFFD;
+        }
+        char32_t cp = ((first & 0x07) << 18) |
+                      ((static_cast<unsigned char>(ptr[1]) & 0x3F) << 12) |
+                      ((static_cast<unsigned char>(ptr[2]) & 0x3F) << 6) |
+                      (static_cast<unsigned char>(ptr[3]) & 0x3F);
+        ptr += 4;
+        return cp;
+    }
+    else {
+        ptr++;
+        return 0xFFFD;
+    }
+}
+
+int WikiEngine::compareUTF8(const char* s1, size_t len1, const char* s2, size_t len2) const {
+    const char* p1 = s1;
+    const char* p2 = s2;
+    const char* end1 = s1 + len1;
+    const char* end2 = s2 + len2;
+    
+    while (p1 < end1 && p2 < end2) {
+        unsigned char c1 = static_cast<unsigned char>(*p1);
+        unsigned char c2 = static_cast<unsigned char>(*p2);
+        
+        if (c1 < 0x80 && c2 < 0x80) {
+            if (c1 != c2) {
+                return (c1 < c2) ? -1 : 1;
+            }
+            p1++;
+            p2++;
+            continue;
+        }
+        
+        break;
+    }
+    
+    while (p1 < end1 && p2 < end2) {
+        char32_t cp1 = decodeUTF8Char(p1, end1);
+        char32_t cp2 = decodeUTF8Char(p2, end2);
+        
+        if (cp1 != cp2) {
+            return (cp1 < cp2) ? -1 : 1;
+        }
+    }
+    
+    if (p1 < end1) return 1;
+    if (p2 < end2) return -1;
+    
+    return 0;
+}
+
+int WikiEngine::compareUTF8(const String& s1, const String& s2) const {
+    return compareUTF8(s1.c_str(), s1.length(), s2.c_str(), s2.length());
+}
+
 bool WikiEngine::begin() {
     _mutex = xSemaphoreCreateMutex();
     // Try opening directly (skipping SD.exists which can be flaky)
@@ -66,8 +154,6 @@ std::vector<String> WikiEngine::search(const String& query, int limit) {
         return results;
     }
 
-    String caseQuery = query; 
-    
     // Binary Search to find the first occurrence >= query
     uint32_t low = 0;
     uint32_t high = _totalEntries - 1;
@@ -78,9 +164,9 @@ std::vector<String> WikiEngine::search(const String& query, int limit) {
         WikiIndexEntry entry;
         readEntry(mid, &entry);
         
-        String titleStr(entry.title);
         // Compare
-        int cmp = titleStr.compareTo(caseQuery);
+        int cmp = compareUTF8(entry.title, strlen(entry.title), 
+                              query.c_str(), query.length());
         
         if (cmp >= 0) {
             best_match = mid; // Potential candidate
@@ -96,8 +182,7 @@ std::vector<String> WikiEngine::search(const String& query, int limit) {
     for (uint32_t i = best_match; i < best_match + limit && i < _totalEntries; i++) {
         WikiIndexEntry entry;
         readEntry(i, &entry);
-        String titleStr(entry.title);
-        results.push_back(titleStr);
+        results.push_back(String(entry.title));
     }
 
     xSemaphoreGive(_mutex);
@@ -163,9 +248,10 @@ uint32_t WikiEngine::loadArticle(const String& title, char* buffer, uint32_t buf
         uint32_t mid = low + (high - low) / 2;
         WikiIndexEntry entry;
         readEntry(mid, &entry);
-        String titleStr(entry.title);
         
-        int cmp = titleStr.compareTo(title);
+        int cmp = compareUTF8(entry.title, strlen(entry.title), 
+                              title.c_str(), title.length());
+        
         if (cmp == 0) {
             uint32_t res = loadArticleAt(entry.offset, entry.length, buffer, bufferSize);
             xSemaphoreGive(_mutex);

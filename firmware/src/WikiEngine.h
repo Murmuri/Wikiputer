@@ -41,6 +41,10 @@ private:
     bool readEntry(uint32_t index, WikiIndexEntry* outEntry);
     
     SemaphoreHandle_t _mutex;
+
+    int compareUTF8(const char* s1, size_t len1, const char* s2, size_t len2) const;
+    int compareUTF8(const String& s1, const String& s2) const;
+    char32_t decodeUTF8Char(const char*& ptr, const char* end) const;
 };
 
 #endif
