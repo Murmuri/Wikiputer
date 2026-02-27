@@ -55,9 +55,9 @@ private:
     int _selectedResultIndex;
     String _articleTitle;
     
-    // Increased to 128KB for large articles (Shenzhen etc)
+    // Increased to 144KB for large articles (Shenzhen etc)
     // Allocated dynamically in begin() to fit in heap
-    static const int VIEW_BUF_SIZE = 131072; 
+    static const int VIEW_BUF_SIZE = 147456;
     char* _articleBuffer = nullptr;
     uint32_t _articleLen; // Track actual length
     

@@ -260,6 +260,81 @@ void cleanWikiText(char* buf) {
     *dst = 0;
 }
 
+bool isRussianLayout = true;
+
+String russianCharToUTF8(char latinKey) {
+    switch (latinKey) {
+        case 'f': return "а";
+        case ',': return "б";
+        case 'd': return "в";
+        case 'u': return "г";
+        case 'l': return "д";
+        case 't': return "е";
+        case '`': return "ё";
+        case ';': return "ж";
+        case 'p': return "з";
+        case 'b': return "и";
+        case 'q': return "й";
+        case 'r': return "к";
+        case 'k': return "л";
+        case 'v': return "м";
+        case 'y': return "н";
+        case 'j': return "о";
+        case 'g': return "п";
+        case 'h': return "р";
+        case 'c': return "с";
+        case 'n': return "т";
+        case 'e': return "у";
+        case 'a': return "ф";
+        case '[': return "х";
+        case 'w': return "ц";
+        case 'x': return "ч";
+        case 'i': return "ш";
+        case 'o': return "щ";
+        case ']': return "ъ";
+        case 's': return "ы";
+        case 'm': return "ь";
+        case '\'': return "э";
+        case '.': return "ю";
+        case 'z': return "я";
+        case 'F': return "А";
+        case '<': return "Б";
+        case 'D': return "В";
+        case 'U': return "Г";
+        case 'L': return "Д";
+        case 'T': return "Е";
+        case '~': return "Ё";
+        case ':': return "Ж";
+        case 'P': return "З";
+        case 'B': return "И";
+        case 'Q': return "Й";
+        case 'R': return "К";
+        case 'K': return "Л";
+        case 'V': return "М";
+        case 'Y': return "Н";
+        case 'J': return "О";
+        case 'G': return "П";
+        case 'H': return "Р";
+        case 'C': return "С";
+        case 'N': return "Т";
+        case 'E': return "У";
+        case 'A': return "Ф";
+        case '{': return "Х";
+        case 'W': return "Ц";
+        case 'X': return "Ч";
+        case 'I': return "Ш";
+        case 'O': return "Щ";
+        case '}': return "Ъ";
+        case 'S': return "Ы";
+        case 'M': return "Ь";
+        case '"': return "Э";
+        case '>': return "Ю";
+        case 'Z': return "Я";
+        
+        default: return String(latinKey);
+    }
+}
+
 void setup() {
     auto cfg = M5.config();
     M5Cardputer.begin(cfg, true);
@@ -300,6 +375,29 @@ void setup() {
     ui.setState(STATE_SEARCH); 
 }
 
+void removeLastUTF8Char(String &q) {
+    if (q.length() == 0) return;
+    
+    int len = q.length();
+    int i = len - 1;
+    
+    while (i >= 0) {
+        char c = q[i];
+
+        if ((c & 0x80) == 0 || (c & 0xC0) == 0xC0) {
+            break;
+        }
+
+        i--;
+    }
+    
+    if (i >= 0) {
+        q.remove(i, len - i);
+    } else {
+        q.remove(len - 1);
+    }
+}
+
 void loop() {
     M5Cardputer.update();
     
@@ -321,7 +419,11 @@ void loop() {
     if (M5Cardputer.Keyboard.isChange() && M5Cardputer.Keyboard.isPressed()) {
         Keyboard_Class::KeysState status = M5Cardputer.Keyboard.keysState();
         AppState state = ui.getState();
-        
+
+        if (M5Cardputer.Keyboard.isKeyPressed(KEY_LEFT_CTRL)) {
+            isRussianLayout = !isRussianLayout;
+        }
+
         // ESC Key: Return to Search Instantly (Check ASCII 27 or ` key)
         if (M5Cardputer.Keyboard.isKeyPressed((char)27) || M5Cardputer.Keyboard.isKeyPressed('`')) {
              ui.setState(STATE_SEARCH);
@@ -331,15 +433,22 @@ void loop() {
         if (state == STATE_SEARCH) {
             bool updateQuery = false;
             String q = ui.getSearchQuery();
-            
+    
             for (auto i : status.word) {
-                q += (char)i;
+                if (!isRussianLayout) {
+                    q += (char)i;
+                } else {
+                    q += russianCharToUTF8(i);
+                }
+                    
                 updateQuery = true;
-            }
+            } 
+
             if (status.del && q.length() > 0) {
-                q.remove(q.length() - 1);
+                removeLastUTF8Char(q);
                 updateQuery = true;
             }
+
             if (updateQuery) {
                 ui.setSearchQuery(q);
                 
@@ -349,7 +458,6 @@ void loop() {
                 // QUEUE ASYNC SEARCH
                 String searchQStr = q;
                 if (searchQStr.length() > 0) {
-                    searchQStr.setCharAt(0, toupper(searchQStr.charAt(0))); 
                     SearchReq req;
                     strncpy(req.query, searchQStr.c_str(), 63);
                     req.query[63] = 0;

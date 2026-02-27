@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import re
 import os
 import argparse
+import bz2
 
 # --- Configuration ---
 # Minimum article length to include (compressed bytes approx)
@@ -11,17 +12,40 @@ MIN_ARTICLE_SIZE = 50
 # Skip redirection pages
 SKIP_REDIRECTS = True
 
-def clean_wiki_text(text):
-    """
-    Very basic cleaner for WikiText.
-    In a real scenario, use mwparserfromhell or similar libraries.
-    """
+def extract_intro(text):
+  
+    if not text:
+        return ""
+    
+    intro_end_patterns = [
+        r'\n=+\s*[^=\n]+\s*=+\n',
+        r'\n----\n',
+        r'{{[Cc]lear}}',
+        r'{{[Tt]OC}}',
+        r'__TOC__',
+        r'\n\|}'
+    ]
+    
+    combined_pattern = '|'.join(intro_end_patterns)
+    match = re.search(combined_pattern, text)
+    
+    if match:
+        intro = text[:match.start()].strip()
+    else:
+        intro = text[:5000].strip()
+    
+    return intro
+
+def clean_wiki_text(text, only_intro=False):
     if not text:
         return ""
     
     # Remove redirection tags
     if re.match(r'#REDIRECT', text, re.IGNORECASE):
         return None if SKIP_REDIRECTS else text
+    
+    if only_intro:
+        text = extract_intro(text)
 
     # Remove [[File:...]]
     text = re.sub(r'\[\[File:.*?\]\]', '', text)
@@ -47,11 +71,7 @@ def clean_wiki_text(text):
     
     return text
 
-import bz2
-
-# ... (clean_wiki_text stays same)
-
-def convert_xml_dump(xml_file, output_dir):
+def convert_xml_dump(xml_file, output_dir, only_intro=False):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -59,6 +79,7 @@ def convert_xml_dump(xml_file, output_dir):
     data_path = os.path.join(output_dir, "wiki.dat")
 
     print(f"Converting {xml_file}...")
+    print(f"Mode: {'Only introductions' if only_intro else 'Full articles'}")
     
     articles_processed = 0
     offset = 0
@@ -106,8 +127,8 @@ def convert_xml_dump(xml_file, output_dir):
             elif tag == 'text':
                 raw_text = elem.text
                 if title and raw_text:
-                    clean_text = clean_wiki_text(raw_text)
-                    
+                    clean_text = clean_wiki_text(raw_text, only_intro)
+        
                     if clean_text and len(clean_text) > MIN_ARTICLE_SIZE:
                         # Compress
                         compressed = zlib.compress(clean_text.encode('utf-8'))
@@ -178,6 +199,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert MediaWiki XML dump to fast-search format")
     parser.add_argument("input", help="Input XML file (.xml or .xml.bz2)")
     parser.add_argument("--out", default="data", help="Output directory")
+    parser.add_argument("--intro", action="store_true", 
+                       help="Extract only introduction (first section) of each article")
     args = parser.parse_args()
     
-    convert_xml_dump(args.input, args.out)
+    convert_xml_dump(args.input, args.out, args.intro)
