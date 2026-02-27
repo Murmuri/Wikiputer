@@ -4,6 +4,7 @@ Read Wikipedia offline on Cardputer.
 Download wiki data for SD card: https://drive.google.com/file/d/1W8JyyuTlTWd-62T0eDM48dqWAbc5VqjF/view?usp=sharing
 
 Key Differences from the оrigina:
+
 🚀 New Features
 Cyrillic Support: Added full support for articles, titles, and content in Cyrillic.
 Russian Keyboard Layout: Implemented the ability to switch to the Russian keyboard layout (using Ctrl key combination).
